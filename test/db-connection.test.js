@@ -1,18 +1,27 @@
 require("dotenv").config();
-const mongoose = require("mongoose");
-const Hugs = require("../api/v1/hug.js");
+const {MongoClient} = require("mongodb");
 
 describe("Connection", () => {
+    let db;
+    const client = new MongoClient(global.__MONGO_URI__);
+
     beforeAll(async () => {
-        await mongoose.connect(process.env.MONGO_URI, {
-            useNewUrlParser: true,
-            useCreateIndex: true,
-            useUnifiedTopology: true,
-        });
+        // client = new MongoClient(global.__MONGO_URI__);
+        await client.connect();
+        db = client.db("loveapi");
     });
 
-    afterAll(async done => {
-        mongoose.disconnect();
-        done();
+    afterAll(async () => {
+        await client.close();
+    });
+
+    it('should insert hug from collection', async () => {
+        //seed some data to the mock db
+        const hugs = db.collection("hugs");
+        const mockHug = {_id: "001", mediaType: "GIF"};
+        await hugs.insertOne(mockHug);
+        // assert that hugs contains the mock db colletion data
+        const insertedHug = await hugs.findOne({_id: '001'});
+        expect(insertedHug).toEqual(mockHug);
     });
 });
